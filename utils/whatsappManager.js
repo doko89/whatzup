@@ -41,7 +41,9 @@ class WhatsAppManager {
       client.on('qr', (qr) => {
         this.qrCodes.set(profileId, qr);
         console.log(`QR Code received for profile ${profileId}`);
+        // Generate QR code in terminal for debugging
         qrcode.generate(qr, { small: true });
+        console.log(`QR Code stored for profile ${profileId}: ${qr.substring(0, 20)}...`);
       });
 
       // Handle client ready event
@@ -62,7 +64,7 @@ class WhatsAppManager {
               message: message.body,
               timestamp: new Date().toISOString()
             };
-            
+
             // Forward message to webhook URL
             await axios.post(webhookUrl, messageData);
             console.log(`Message forwarded to webhook for profile ${profileId}`);
@@ -74,10 +76,10 @@ class WhatsAppManager {
 
       // Initialize the client
       await client.initialize();
-      
+
       // Store the client in the map
       this.clients.set(profileId, client);
-      
+
       return { success: true, message: 'Client initialized successfully' };
     } catch (error) {
       console.error(`Error initializing WhatsApp client for profile ${profileId}:`, error.message);
@@ -140,7 +142,7 @@ class WhatsAppManager {
               message: message.body,
               timestamp: new Date().toISOString()
             };
-            
+
             // Forward message to webhook URL
             await axios.post(webhookUrl, messageData);
             console.log(`Message forwarded to webhook for profile ${profileId}`);

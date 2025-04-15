@@ -8,7 +8,7 @@ const contactRoutes = require('./contactRoutes');
 // API routes
 router.use('/api/profiles', profileRoutes);
 router.use('/api/message', messageRoutes);
-router.use('/api/group', groupRoutes);
+router.use('/api/groups', groupRoutes);
 router.use('/api/contacts', contactRoutes);
 
 // Root route

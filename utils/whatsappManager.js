@@ -26,6 +26,8 @@ class WhatsAppManager {
         return { success: true, message: 'Client already initialized' };
       }
 
+      console.log(`Creating new WhatsApp client for profile ${profileId}...`);
+
       // Create a new client with session data stored in profile-specific directory
       const client = new Client({
         authStrategy: new LocalAuth({
@@ -33,23 +35,50 @@ class WhatsAppManager {
           dataPath: sessionsDir
         }),
         puppeteer: {
-          args: ['--no-sandbox', '--disable-setuid-sandbox']
-        }
+          headless: true,
+          args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-accelerated-2d-canvas',
+            '--no-first-run',
+            '--no-zygote',
+            '--single-process',
+            '--disable-gpu'
+          ]
+        },
+        qrMaxRetries: 3
       });
 
-      // Store QR code when generated
-      client.on('qr', (qr) => {
-        this.qrCodes.set(profileId, qr);
-        console.log(`QR Code received for profile ${profileId}`);
-        // Generate QR code in terminal for debugging
-        qrcode.generate(qr, { small: true });
-        console.log(`QR Code stored for profile ${profileId}: ${qr.substring(0, 20)}...`);
+      // Create a promise that will resolve when QR code is received
+      const qrPromise = new Promise(resolve => {
+        // Store QR code when generated
+        client.on('qr', (qr) => {
+          this.qrCodes.set(profileId, qr);
+          console.log(`QR Code received for profile ${profileId}`);
+          // Generate QR code in terminal for debugging
+          qrcode.generate(qr, { small: true });
+          console.log(`QR Code stored for profile ${profileId}: ${qr.substring(0, 20)}...`);
+          resolve(qr);
+        });
       });
 
       // Handle client ready event
       client.on('ready', () => {
         console.log(`WhatsApp client ready for profile ${profileId}`);
         // Clear QR code when client is ready
+        this.qrCodes.delete(profileId);
+      });
+
+      // Handle authentication failure
+      client.on('auth_failure', (msg) => {
+        console.error(`Authentication failure for profile ${profileId}:`, msg);
+      });
+
+      // Handle disconnected event
+      client.on('disconnected', (reason) => {
+        console.log(`WhatsApp client disconnected for profile ${profileId}:`, reason);
+        this.clients.delete(profileId);
         this.qrCodes.delete(profileId);
       });
 
@@ -75,12 +104,21 @@ class WhatsAppManager {
       }
 
       // Initialize the client
-      await client.initialize();
+      console.log(`Initializing WhatsApp client for profile ${profileId}...`);
+      const initPromise = client.initialize();
+
+      // Race between initialization and QR code generation
+      const result = await Promise.race([
+        initPromise.then(() => ({ type: 'init_complete' })),
+        qrPromise.then(qr => ({ type: 'qr_received', qr }))
+      ]);
+
+      console.log(`Race result for profile ${profileId}:`, result.type);
 
       // Store the client in the map
       this.clients.set(profileId, client);
 
-      return { success: true, message: 'Client initialized successfully' };
+      return { success: true, message: 'Client initialized successfully', qrGenerated: result.type === 'qr_received' };
     } catch (error) {
       console.error(`Error initializing WhatsApp client for profile ${profileId}:`, error.message);
       return { success: false, message: error.message };

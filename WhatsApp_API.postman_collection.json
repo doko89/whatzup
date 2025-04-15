@@ -205,9 +205,9 @@
               "raw": "{\n    \"profileId\": {{profileId}},\n    \"groupId\": \"group-id@g.us\",\n    \"message\": \"Hello from WhatsApp API!\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/group/send",
+              "raw": "{{baseUrl}}/api/groups/send",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "group", "send"]
+              "path": ["api", "groups", "send"]
             },
             "description": "Send a message to a WhatsApp group"
           },

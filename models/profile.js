@@ -167,58 +167,60 @@ class Profile {
       let qrCode = whatsappManager.getQRCode(id);
       console.log(`Getting QR code for profile ${id}: ${qrCode ? 'Found' : 'Not found'}`);
 
-      // If client exists but is not authenticated, destroy it and create a new one
-      const client = whatsappManager.getClient(id);
-      if (client && !qrCode) {
-        console.log(`Client exists for profile ${id} but no QR code, destroying and reinitializing...`);
+      if (qrCode) {
+        // If we already have a QR code, return it immediately
+        return {
+          success: true,
+          data: { qrCode }
+        };
+      }
+
+      // If no QR code is available, we need to initialize or reinitialize the client
+      console.log(`No QR code available for profile ${id}, initializing client...`);
+
+      // Always destroy any existing client to ensure a fresh start
+      if (whatsappManager.getClient(id)) {
         await whatsappManager.destroyClient(id);
-        await whatsappManager.initClient(
-          id,
-          profiles[0].webhook_url,
-          profiles[0].enable_webhook
-        );
+      }
 
-        // Wait for QR code to be generated
-        console.log(`Waiting for QR code generation for profile ${id}...`);
-        for (let i = 0; i < 10; i++) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          qrCode = whatsappManager.getQRCode(id);
-          if (qrCode) {
-            console.log(`QR code generated for profile ${id} after ${i+1} seconds`);
-            break;
-          }
-        }
-      } else if (!client) {
-        // If client doesn't exist, initialize it
-        console.log(`Initializing new client for profile ${id}`);
-        await whatsappManager.initClient(
-          id,
-          profiles[0].webhook_url,
-          profiles[0].enable_webhook
-        );
+      // Initialize a new client
+      const initResult = await whatsappManager.initClient(
+        id,
+        profiles[0].webhook_url,
+        profiles[0].enable_webhook
+      );
 
-        // Wait for QR code to be generated
-        console.log(`Waiting for QR code generation for profile ${id}...`);
-        for (let i = 0; i < 10; i++) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          qrCode = whatsappManager.getQRCode(id);
-          if (qrCode) {
-            console.log(`QR code generated for profile ${id} after ${i+1} seconds`);
-            break;
-          }
+      if (!initResult.success) {
+        return { success: false, message: `Failed to initialize WhatsApp client: ${initResult.message}` };
+      }
+
+      // If QR code was generated during initialization, return it
+      if (initResult.qrGenerated) {
+        qrCode = whatsappManager.getQRCode(id);
+        if (qrCode) {
+          return {
+            success: true,
+            data: { qrCode }
+          };
         }
       }
 
-      // Final check for QR code
-      qrCode = whatsappManager.getQRCode(id);
-      if (!qrCode) {
-        return { success: false, message: 'Failed to generate QR code. Please try again.' };
+      // Wait a bit more for QR code to be generated
+      console.log(`Waiting for QR code generation for profile ${id}...`);
+      for (let i = 0; i < 5; i++) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        qrCode = whatsappManager.getQRCode(id);
+        if (qrCode) {
+          console.log(`QR code generated for profile ${id} after ${i+1} seconds`);
+          return {
+            success: true,
+            data: { qrCode }
+          };
+        }
       }
 
-      return {
-        success: true,
-        data: { qrCode }
-      };
+      // If we still don't have a QR code, return an error
+      return { success: false, message: 'Failed to generate QR code. Please try again.' };
     } catch (error) {
       console.error(`Error getting QR code for profile ${id}:`, error.message);
       return { success: false, message: error.message };

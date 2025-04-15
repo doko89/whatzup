@@ -1,0 +1,39 @@
+version: '3'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - DB_HOST=db
+      - DB_USER=whatzup
+      - DB_PASSWORD=whatzup_password
+      - DB_NAME=whatzup
+      - DB_PORT=3306
+      - JWT_SECRET=your_jwt_secret_key
+      - JWT_EXPIRES_IN=7d
+      - WA_SESSION_PATH=./sessions
+    volumes:
+      - ./sessions:/usr/src/app/sessions
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  db:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root_password
+      - MYSQL_DATABASE=whatzup
+      - MYSQL_USER=whatzup
+      - MYSQL_PASSWORD=whatzup_password
+    volumes:
+      - mysql_data:/var/lib/mysql
+    restart: unless-stopped
+
+volumes:
+  mysql_data:

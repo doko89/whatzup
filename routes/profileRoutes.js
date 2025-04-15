@@ -22,4 +22,7 @@ router.delete('/:id', authenticateToken, profileController.deleteProfile);
 // Get QR code for a profile
 router.get('/:id/qrcode', authenticateToken, profileController.getQRCode);
 
+// Logout a profile from WhatsApp
+router.post('/:id/logout', authenticateToken, profileController.logoutProfile);
+
 module.exports = router;

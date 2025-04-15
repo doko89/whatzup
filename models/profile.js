@@ -128,6 +128,26 @@ class Profile {
     }
   }
 
+  // Logout a profile from WhatsApp
+  static async logout(id) {
+    try {
+      // Check if profile exists
+      const [profiles] = await pool.query('SELECT * FROM profiles WHERE id = ?', [id]);
+
+      if (profiles.length === 0) {
+        return { success: false, message: 'Profile not found' };
+      }
+
+      // Logout the WhatsApp client
+      const result = await whatsappManager.logoutClient(id);
+
+      return result;
+    } catch (error) {
+      console.error(`Error logging out profile ${id}:`, error.message);
+      return { success: false, message: error.message };
+    }
+  }
+
   // Get QR code for a profile
   static async getQRCode(id) {
     try {

@@ -133,6 +133,25 @@
             "description": "Get QR code for a WhatsApp profile"
           },
           "response": []
+        },
+        {
+          "name": "Logout Profile",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/profiles/{{profileId}}/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "profiles", "{{profileId}}", "logout"]
+            },
+            "description": "Logout a WhatsApp profile session"
+          },
+          "response": []
         }
       ],
       "description": "Endpoints for managing WhatsApp profiles"

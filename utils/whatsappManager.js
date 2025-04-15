@@ -121,6 +121,35 @@ class WhatsAppManager {
     }
   }
 
+  // Logout a client
+  async logoutClient(profileId) {
+    try {
+      const client = this.clients.get(profileId);
+      if (!client) {
+        return { success: false, message: 'Client not found' };
+      }
+
+      // Check if client is authenticated
+      if (!this.isAuthenticated(profileId)) {
+        return { success: false, message: 'Client is not authenticated' };
+      }
+
+      console.log(`Logging out WhatsApp client for profile ${profileId}...`);
+
+      // Logout from WhatsApp
+      await client.logout();
+
+      // Destroy the client after logout
+      await this.destroyClient(profileId);
+
+      console.log(`WhatsApp client for profile ${profileId} logged out successfully`);
+      return { success: true, message: 'Logged out successfully' };
+    } catch (error) {
+      console.error(`Error logging out WhatsApp client for profile ${profileId}:`, error.message);
+      return { success: false, message: error.message };
+    }
+  }
+
   // Update webhook configuration for a client
   updateWebhook(profileId, webhookUrl, enableWebhook) {
     try {

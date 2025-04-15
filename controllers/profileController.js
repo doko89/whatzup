@@ -138,11 +138,33 @@ const getQRCode = async (req, res) => {
   }
 };
 
+// Logout a profile from WhatsApp
+const logoutProfile = async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log(`Logout requested for profile ${id}`);
+
+    const result = await Profile.logout(id);
+
+    if (!result.success) {
+      console.log(`Failed to logout profile ${id}: ${result.message}`);
+      return res.status(400).json(result);
+    }
+
+    console.log(`Successfully logged out profile ${id}`);
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error(`Error logging out profile ${req.params.id}:`, error.message);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
 module.exports = {
   createProfile,
   getAllProfiles,
   getProfileById,
   updateProfile,
   deleteProfile,
-  getQRCode
+  getQRCode,
+  logoutProfile
 };

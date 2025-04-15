@@ -100,7 +100,8 @@ class WhatsAppManager {
   // Check if a client is authenticated
   isAuthenticated(profileId) {
     const client = this.clients.get(profileId);
-    return client && client.info;
+    // A client is authenticated if it exists, has info property, and no QR code is pending
+    return client && client.info && !this.qrCodes.has(profileId);
   }
 
   // Destroy a client

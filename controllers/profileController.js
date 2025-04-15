@@ -9,16 +9,16 @@ const createProfile = async (req, res) => {
     if (!errors.isEmpty()) {
       return res.status(400).json({ success: false, errors: errors.array() });
     }
-    
+
     const { name, webhookUrl, enableWebhook } = req.body;
-    
+
     // Create profile
     const result = await Profile.create(name, webhookUrl, enableWebhook);
-    
+
     if (!result.success) {
       return res.status(400).json(result);
     }
-    
+
     return res.status(201).json(result);
   } catch (error) {
     console.error('Error creating profile:', error.message);
@@ -30,11 +30,11 @@ const createProfile = async (req, res) => {
 const getAllProfiles = async (req, res) => {
   try {
     const result = await Profile.getAll();
-    
+
     if (!result.success) {
       return res.status(400).json(result);
     }
-    
+
     return res.status(200).json(result);
   } catch (error) {
     console.error('Error getting profiles:', error.message);
@@ -46,13 +46,13 @@ const getAllProfiles = async (req, res) => {
 const getProfileById = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const result = await Profile.getById(id);
-    
+
     if (!result.success) {
       return res.status(404).json(result);
     }
-    
+
     return res.status(200).json(result);
   } catch (error) {
     console.error(`Error getting profile ${req.params.id}:`, error.message);
@@ -68,16 +68,16 @@ const updateProfile = async (req, res) => {
     if (!errors.isEmpty()) {
       return res.status(400).json({ success: false, errors: errors.array() });
     }
-    
+
     const { id } = req.params;
     const { name, webhookUrl, enableWebhook } = req.body;
-    
+
     const result = await Profile.update(id, name, webhookUrl, enableWebhook);
-    
+
     if (!result.success) {
       return res.status(404).json(result);
     }
-    
+
     return res.status(200).json(result);
   } catch (error) {
     console.error(`Error updating profile ${req.params.id}:`, error.message);
@@ -89,13 +89,13 @@ const updateProfile = async (req, res) => {
 const deleteProfile = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const result = await Profile.delete(id);
-    
+
     if (!result.success) {
       return res.status(404).json(result);
     }
-    
+
     return res.status(200).json(result);
   } catch (error) {
     console.error(`Error deleting profile ${req.params.id}:`, error.message);
@@ -107,13 +107,30 @@ const deleteProfile = async (req, res) => {
 const getQRCode = async (req, res) => {
   try {
     const { id } = req.params;
-    
-    const result = await Profile.getQRCode(id);
-    
+    console.log(`QR code requested for profile ${id}`);
+
+    // Set a timeout for the request
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Request timeout')), 15000);
+    });
+
+    // Get QR code with timeout
+    const resultPromise = Profile.getQRCode(id);
+
+    let result;
+    try {
+      result = await Promise.race([resultPromise, timeoutPromise]);
+    } catch (error) {
+      console.error(`Timeout getting QR code for profile ${id}:`, error.message);
+      return res.status(408).json({ success: false, message: 'Request timeout. QR code generation is taking too long.' });
+    }
+
     if (!result.success) {
+      console.log(`Failed to get QR code for profile ${id}: ${result.message}`);
       return res.status(400).json(result);
     }
-    
+
+    console.log(`Successfully retrieved QR code for profile ${id}`);
     return res.status(200).json(result);
   } catch (error) {
     console.error(`Error getting QR code for profile ${req.params.id}:`, error.message);
